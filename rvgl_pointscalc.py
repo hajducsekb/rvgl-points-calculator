@@ -2,9 +2,12 @@ import csv
 import time
 from copy import deepcopy
 import os
+import collections
 
-tempfile = '/give/a/path/here/temp.txt'
-standingsfile = '/give/a/path/here/standings.txt'
+tempfile = '/path/to/temp.txt'
+standingsfile = '/path/to/standings.txt'
+
+
 
 while 1 == 1:
     with open(tempfile) as csv_file:
@@ -17,18 +20,21 @@ while 1 == 1:
                     if str(line[0]) == str(k):
                         v += int(line[1])
                         drive[str(line[0])] += int(line[1])
-                    print(str(k) + ' ' + str(v))
+                    #print(str(k) + ' ' + str(v))
             else:
                 drivers[str(line[0])] = 0
                 for key, value in drivers.items():
                     if str(line[0]) == str(key):
                         value += int(line[1])
                         drive[str(line[0])] = value
-        print(drive)
+        #print(drive)
         if os.path.isfile(standingsfile) == True:
             os.remove(standingsfile)
         open(standingsfile, 'a').close()
-        for key, value in drive.items():
+        sorted_drive = sorted(drive.items(), key=lambda kv: kv[1], reverse=True)
+        sorted_dict = collections.OrderedDict(sorted_drive)
+        print('Sorted dict: ' + str(sorted_dict))
+        for key, value in sorted_dict.items():
             file1 = open(standingsfile,"a")
             file1.write(str(key) + ' ' + str(value) + '\n')
             file1.close()
