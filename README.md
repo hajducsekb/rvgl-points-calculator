@@ -29,7 +29,8 @@ Download the repository as a zip file, and put the `rvgl-points-calculator-maste
 
 ### Windows (from Releases)
 
-Download the zip file from the [Releases](https://github.com/hajducsekb/rvgl-points-calculator/releases) tab. After you have it downloaded, put the `pointscalc` folder from the zip inside your RVGL folder. Structure should look like the following: `...\rvgl\pointscalc\pointscalc2.exe`. Now you can run the exe, although I'd recommend you to read the rest of the readme (especially the options in the Config).
+Download the zip file from the [Releases](https://github.com/hajducsekb/rvgl-points-calculator/releases) tab. After you have it downloaded, put the `pointscalc` folder from the zip inside your RVGL folder. Structure should look like the following: `...\rvgl\pointscalc\pointscalc2.exe`. Now you can run the exe, although I'd recommend you to read the rest of the readme (especially the options in the Config).<br>
+Credits to DVark09 for compiling the exe!
 
 ## Point Systems
 
