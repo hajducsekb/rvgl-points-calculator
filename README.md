@@ -1,6 +1,6 @@
 # RVGL Points Calculator
 
-This is a simple project for calculating points during a multiplayer session in RVGL using the -sessionlog feature.
+This is a simple project for calculating points during a multiplayer session in RVGL using the -sessionlog feature. The script can output HTML files with session results.
 
 ## Examples
 
@@ -10,13 +10,26 @@ This is a simple project for calculating points during a multiplayer session in 
 
 ## Usage
 
-If you know how to use python, just download the repository as a zip file, and put the `rvgl-points-calculator-master` directory from the archive inside your RVGL folder. If you want to use git clone:
+### Linux (using Git)
+
 ```
 cd /path/to/rvgl/
 git clone https://github.com/hajducsekb/rvgl-points-calculator.git
 cd rvgl-points-calculator
 ```
-Either way you use to install, you can run the app using the `pointscalc2.py` file. The output will be an HTML file with the same name as the sessionlog file you've used (in the folder of the executable).
+To run the app, use `./pointscalc2.py`. I recommend using git, because you can easily update the app using git. Updating is as easy as:
+```
+cd /path/to/rvgl/rvgl-points-calculator
+git pull
+```
+
+### Linux (using Download as Zip)
+
+Download the repository as a zip file, and put the `rvgl-points-calculator-master` directory from the archive inside your RVGL folder. Folder structure should be like the following: `.../rvgl/rvgl-points-calculator-master/pointscalc2.py`.
+
+### Windows (from Releases)
+
+Download the zip file from the [Releases](https://github.com/hajducsekb/rvgl-points-calculator/releases) tab. After you have it downloaded, put the `pointscalc` folder from the zip inside your RVGL folder. Structure should look like the following: `...\rvgl\pointscalc\pointscalc2.exe`. Now you can run the exe, although I'd recommend you to read the rest of the readme (especially the options in the Config).
 
 ## Point Systems
 
@@ -40,3 +53,11 @@ If the Live Mode is set to true, the script will run in an infinite loop (with b
 ### Listed Sessionlogs
 
 This determines the number of sessionlogs that you can pick from (this is listed based on last creation date).
+
+## Bug Reports
+
+I expect there to be a few bugs at the very least with the HTML file, since not all sessionlogs are the same, and the app is also quite versatile. If you encounter one, please report it using one of the following:
+
+- Issue Tracker
+- Discord (`hajducsekb#3604`)
+- Telegram (`@hajducsekb`)

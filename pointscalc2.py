@@ -252,10 +252,10 @@ def addTime(race, timeTable, DNFList, BestLap=False):
     except KeyError:
         print('No Penalty Time given in config.')
         penaltyTime = lapCount*2000
-    print(penaltyTime)
+    #print(penaltyTime)
     finishingTime = lastTime + penaltyTime
     for racer in DNFList:
-        print(racer)
+        #print(racer)
         for k,v in timeTable.items():
             if racer == str(k):
                 timeTable[k] += finishingTime
@@ -274,13 +274,13 @@ def DNFCheck(pointsTable, race):
             if str(line[1]) == racer and str(line[5]) == "true":
                 DNF = False
         if DNF == True:
-            print(racer + " has not finished.")
+            #print(racer + " has not finished.")
             stringpointsTable[racer] = stringpointsTable[racer] + "0"
             DNFList.append(racer)
     return DNFList
 
 def addBLPoints(bestLapDict, pointsTable, DNFList):
-    print(bestLapDict)
+    #print(bestLapDict)
     position = 1
     for racer,lap in bestLapDict.items():
         pointsGot = BLpointsystem[str(position).zfill(2)]
@@ -295,8 +295,8 @@ def addBLPoints(bestLapDict, pointsTable, DNFList):
     return pointsTable
 
 def addBLPointsDyn(bestLapDict, pointsTable, race, DNFList):
-    print(bestLapDict)
-    print(DNFList)
+    #print(bestLapDict)
+    #print(DNFList)
     racers = getRacersCount(race)
     position = 1
     for racer,lap in bestLapDict.items():
