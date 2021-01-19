@@ -1,24 +1,34 @@
 # RVGL Points Calculator
 
-This is a simple project for calculating points during a multiplayer session in RVGL using the -sessionlog feature. It takes the results from the csv in the RVGL profile folder, takes the positions of the users, calculates the points based on the dictionary
-in the rvgl.py file, then it outputs them into a standings.txt. The point system is easily editable, as well as the path for
-your rvgl installation. It always takes the latest csv in the folder, so it should work properly even if it is started before 
-RVGL is. For now, both files need to run, however, I plan to merge them. There's also a temp.txt for now, it makes it easier
-to handle the data. 
+This is a simple project for calculating points during a multiplayer session in RVGL using the -sessionlog feature.
 
 ## Usage
 
-The only requirement this script has is Python 3 itself, since the used dependencies come included with it. For the installation
-of Python 3, please refer to the official site, or look it up on the search engine of your choice. After you've set it up, edit
-the files you've downloaded from here in the IDE you like (this could be notepad, if you don't have any), and edit the following
-parts: in the rvgl.py file,
-edit the paths in your rvglpath and tempfile variables (line 6 and 7). rvglpath is the path to your installation, this has to end
-with a forward slash (/). Tempfile is the file path and name chosen for the temporary data file (this path isn't important, but
-it has to end with a .txt file). In the rvgl_pointscalc.py file, type the same path for tempfile. standingsfile is also a text
-file, which can also be anywhere, but it has to end with a txt as well. **Warning: Do not give a path and filename that already
-exists, because it will be overwritten.**
+If you know how to use python, just download the repository as a zip file, and put the `rvgl-points-calculator-master` directory from the archive inside your RVGL folder. If you want to use git clone:
+```
+cd /path/to/rvgl/
+git clone https://github.com/hajducsekb/rvgl-points-calculator.git
+cd rvgl-points-calculator
+```
+Either way you use to install, you can run the app using the `pointscalc2.py` file.
 
-Now you can open up two terminal/cmd windows, where you have to type 'python3 /path/to/files/rvgl.py' and in the other one 
-'python3 /path/to/files/rvgl_pointscalc.py'. Note that instead of typing or copying the path to those files, you can also drag
-them into the terminal after you've written python3 and a space. Keep these running until you've finished playing. It should 
-now work, the championship standings will be in the standingsfile. If it doesn't, you or I have messed up somewhere... 
+## Point Systems
+
+You can either use a dynamic point system by pressing `1` (this is the system the Online Session Parser uses), or use one of the files in the `pointsystem` folder. You can create your own point system by making a copy of an already existing one, and editing it. Make sure that the commas and quotes stay the same, as json file have a tight set of rules.<br>
+If you want to give points based only on best laps, use the "zero" point system for race results, as best laps only points are not integrated.
+
+## Config
+
+The config.json file is located in the same folder as the python file that's used to run the app.
+
+### Penalty Time
+
+The Penalty Time is the one that's used to determine the finishing times and best laps of people who haven't finished. The way their times are calculated is by taking the time of the last finisher, and adding the penalty time for each lap. You can use both integers and floats, for example, `2` and `0.5` would both work.
+
+### Live Mode
+
+If the Live Mode is set to true, the script will run in an infinite loop (with breaks of 2 seconds). The last created sessionlog in your `profiles` folder will be selected. Instead of the HTML files, the points will be written into a `liveStandings.txt` file in a very simplistic format. This file is located in the folder of the executable/python file. You can open this file in OBS, for example, and if you add a text source, and tick `Read from file`, you can select this to display the standings of the current session on your stream.
+
+### Listed Sessionlogs
+
+This determines the number of sessionlogs that you can pick from (this is listed based on last creation date).

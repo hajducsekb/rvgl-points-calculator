@@ -1,3 +1,5 @@
 {
-    "penaltyTime" : -10
+    "penaltyTime" : 0.5,
+    "liveMode" : false,
+    "listedSessionlogs" : 20
 }
