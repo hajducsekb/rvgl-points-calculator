@@ -279,12 +279,12 @@ def DNFCheck(pointsTable, race):
             DNFList.append(racer)
     return DNFList
 
-def addBLPoints(bestLapDict, pointsTable):
+def addBLPoints(bestLapDict, pointsTable, DNFList):
     print(bestLapDict)
     position = 1
     for racer,lap in bestLapDict.items():
         pointsGot = BLpointsystem[str(position).zfill(2)]
-        if str(racer) in pointsTable.keys():
+        if str(racer) in pointsTable.keys() and racer not in DNFList:
             for k,v in pointsTable.items():
                 if str(k) == str(racer):
                     pointsTable[k] = v + pointsGot
@@ -294,13 +294,14 @@ def addBLPoints(bestLapDict, pointsTable):
         
     return pointsTable
 
-def addBLPointsDyn(bestLapDict, pointsTable, race):
+def addBLPointsDyn(bestLapDict, pointsTable, race, DNFList):
     print(bestLapDict)
+    print(DNFList)
     racers = getRacersCount(race)
     position = 1
     for racer,lap in bestLapDict.items():
         pointsGot = racers + 1 - position
-        if str(racer) in pointsTable.keys():
+        if str(racer) in pointsTable.keys() and racer not in DNFList:
             for k,v in pointsTable.items():
                 if str(k) == str(racer):
                     pointsTable[k] = v + pointsGot
@@ -372,11 +373,14 @@ def stringTableMid(stringpointsTable, stringTimeTable, stringBLTable):
 
 def stringTableHTML(stringpointsTable, pointsTable, time = False):
     string_sorted = {}
+    global BLPoints
     for k,v in pointsTable.items():
-        if time == True:
+        if time == True and BLPoints == True:
             v = timeConvertRev(v)
             stringpointsTable[k] = stringpointsTable[k] + str(v)
-        else:
+        elif time == True:
+            v = timeConvertRev(v)
+        if time == False or BLPoints == False:
             stringpointsTable[k] = stringpointsTable[k] + " + " + str(v)
         string_sorted[k] = stringpointsTable[k].replace(" + ", "</td><td>")
     HTMLTable = dictToHTML(string_sorted, True, time=time)
@@ -430,9 +434,9 @@ def countPoints():
             stringpointsTable = stringTableMid(stringpointsTable, stringTimeTable, stringBLTable)
         if BLPoints == True:
             if dynamicBLPoints:
-                addBLPointsDyn(bestLapDict, pointsTable, race)
+                addBLPointsDyn(bestLapDict, pointsTable, race, DNFList)
             else:
-                pointsTable = addBLPoints(bestLapDict, pointsTable)
+                pointsTable = addBLPoints(bestLapDict, pointsTable, DNFList)
             DNFCheck(pointsTable, race)
             if race != splitRaces(sessionlog)[-1]:
                 stringpointsTable = stringTableMid(stringpointsTable, dummy, dummy)

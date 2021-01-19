@@ -2,6 +2,12 @@
 
 This is a simple project for calculating points during a multiplayer session in RVGL using the -sessionlog feature.
 
+## Examples
+
+- [Casual Session - Dynamic points, no Best Lap points](https://archive.hajduc.com/session_2021-01-17_20-00-00.html)
+- [RVEC (Tournament) - New F1 for Race Results, Old F1 for Best Lap points](https://archive.hajduc.com/session_rvec_merged.html)
+- [Best Lap Session - No Race Result points, Dynamic points for Best Laps](https://archive.hajduc.com/session_2020-05-18_21-29-18.html)
+
 ## Usage
 
 If you know how to use python, just download the repository as a zip file, and put the `rvgl-points-calculator-master` directory from the archive inside your RVGL folder. If you want to use git clone:
