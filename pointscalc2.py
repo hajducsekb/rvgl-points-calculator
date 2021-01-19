@@ -194,7 +194,7 @@ def playerList(race, laps):
             bestLap = timeConvertRev(timeConvert(str(line[4])))
             raceTime = timeConvertRev(timeConvert(str(line[3])))
             avgTime = timeConvertRev(timeConvert(str(line[3]))/int(lapCount))
-            playerDict[str(line[1])] = [str(raceTime), str(bestLap), str(avgTime), str(pointsTable[str(line[1])])]
+            playerDict[str(line[1])] = [str(raceTime), str(bestLap), str(avgTime), str(line[2]), str(pointsTable[str(line[1])])]
     return playerDict
         
 
@@ -323,7 +323,7 @@ def dictToHTML(dict, isFullTable=False, playerDict={}, time=False):
         for k,v in dict.items():
             htmlTable += "<tr><td>" + str(k) + "</td><td>" + str(v) + "</td></tr>\n"
     else:
-        htmlTable += '<tr><th>Pos</th><th>Name</th><th>Race Time</th><th>Best Lap</th><th>Average Time</th><th>Points After</th></tr>\n'
+        htmlTable += '<tr><th>Pos</th><th>Name</th><th>Race Time</th><th>Best Lap</th><th>Average Time</th><th>Car</th><th>Points After</th></tr>\n'
         position = 1
         for k,v in playerDict.items():
             htmlTable += '<tr><td>' + str(position) + '</td><td>' + str(k) + '</td>'
@@ -451,8 +451,13 @@ def countPoints():
     textBased = ''
     currentPos = 1
     for k,v in points_sorted.items():
-        textBased += str(currentPos) + '. ' + str(k) + ' - ' + str(v) + '\n'
-        currentPos += 1
+        try:
+            if currentPos <= configDict['liveModeLimit']:
+                textBased += str(currentPos) + '. ' + str(k) + ' - ' + str(v) + '\n'
+                currentPos += 1
+        except KeyError:
+            print('No liveModeLimit set in the config file. Using the default (20).')
+            configDict['liveModeLimit'] = 20
     return textBased
     #print(timeTable)
     #print(stringBLTable)
@@ -490,7 +495,7 @@ document.querySelectorAll("th").forEach(th => th.addEventListener("click", (() =
 html += "</div></body></html>"
 
 if configDict['liveMode']:
-    print('Live Mode is on. You can exit with Ctrl + C')
+    print('Live Mode is on. You can exit with Ctrl + C.')
     time.sleep(3)
     while True:
         try:
