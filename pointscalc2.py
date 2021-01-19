@@ -32,19 +32,22 @@ else:
     sorted_filelist = reversed(sorted(filelist, key=os.path.getctime))
     current = 1
     fileDict = {}
+    print()
     for file in sorted_filelist:
         if current < configDict['listedSessionlogs'] + 1:
             print(str(current) + " - " + getFileName(file, ''))
             fileDict[current] = Path(file)
             current += 1
-    sessionlog = input("Which file do you want to choose?\nYou can also type in a path.")
+    sessionlog = input("Which file do you want to choose?\nYou can also type in a path. ")
     try: 
         intlog = int(sessionlog)
         sessionlog = fileDict[intlog]
     except:
         sessionlog = Path(sessionlog)
 
-BLquestion = input("Should points be given based on people\'s best laps? (y/n)").lower()
+print()
+
+BLquestion = input("Should points be given based on people\'s best laps? (y/n) ").lower()
 if BLquestion == "y":
     BLPoints = True
 else:
@@ -60,12 +63,15 @@ fileDict = {}
 filelist = glob.glob(os.path.join(workingpath, 'pointsystem', "*.json"))
 sorted_filelist = sorted(filelist)
 current = 2
+print('1 - DYNAMIC')
 for file in sorted_filelist:
     print(str(current) + " - " + getFileName(file, '.json'))
     fileDict[current] = Path(file)
     current += 1
 
-pointstype = input("Which pointsystem would you like to load for race results?\nNote: '1' means that the point system will be dynamic based on the number of racers. ")
+print()
+
+pointstype = input("Which POINT SYSTEM would you like to load for RACE RESULTS?\nNote: '1' means that the point system will be dynamic based on the number of racers. ")
 if pointstype == "1":
     dynamicPoints = True
     pointsystem = ""
@@ -74,8 +80,10 @@ else:
     with open(fileDict[int(pointstype)], "r") as jsonfile:
         pointsystem = json.load(jsonfile)
         
+print()
+        
 if BLPoints == True:
-    BLpointstype = input("Which pointsystem would you like to load for best laps?\nNote: '1' means that the point system will be dynamic based on the number of racers. ")
+    BLpointstype = input("Which POINT SYSTEM would you like to load for BEST LAPS?\nNote: '1' means that the point system will be dynamic based on the number of racers. ")
     if BLpointstype == "1":
         dynamicBLPoints = True
         BLpointsystem = ""
@@ -478,12 +486,17 @@ html += "</div></body></html>"
 
 if configDict['liveMode']:
     print('Live Mode is on. You can exit with Ctrl + C')
-    time.sleep(1)
+    time.sleep(3)
     while True:
-        pointsTable = {}
-        with open(os.path.join(workingpath, 'liveStandings.txt'), 'w+') as liveFile:
-            liveFile.write(countPoints())
-        time.sleep(2)
+        try:
+            pointsTable = {}
+            with open(os.path.join(workingpath, 'liveStandings.txt'), 'w+') as liveFile:
+                liveFile.write(countPoints())
+            time.sleep(2)
+        except KeyboardInterrupt:
+            print()
+            print('Exiting...')
+            sys.exit()
         
 countPoints()
         
