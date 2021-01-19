@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import os
 import sys
 import time
@@ -76,7 +78,6 @@ if pointstype == "1":
     dynamicPoints = True
     pointsystem = ""
 else:
-    print(fileDict)
     with open(fileDict[int(pointstype)], "r") as jsonfile:
         pointsystem = json.load(jsonfile)
         
@@ -503,6 +504,7 @@ countPoints()
 
 with open(os.path.join(workingpath, getFileName(sessionlog, '.csv') + ".html"), "w+") as htmlfile:
     htmlfile.write(htmlbegin + stringTableHTML(stringpointsTable, points_sorted) + '<h1 class="center">Time Table</h1>' + stringTableHTML(stringTimeTable, timeTable, True) + '<h1 class="center">Best Lap Table</h1>' + stringTableHTML(stringBLTable, bestLapTable, True) + html)
+    print()
     print("HTML file has been created. :)")
     
 quitQ = input("Press Enter to quit")

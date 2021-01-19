@@ -10,7 +10,7 @@ cd /path/to/rvgl/
 git clone https://github.com/hajducsekb/rvgl-points-calculator.git
 cd rvgl-points-calculator
 ```
-Either way you use to install, you can run the app using the `pointscalc2.py` file.
+Either way you use to install, you can run the app using the `pointscalc2.py` file. The output will be an HTML file with the same name as the sessionlog file you've used (in the folder of the executable).
 
 ## Point Systems
 
