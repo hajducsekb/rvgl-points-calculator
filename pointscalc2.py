@@ -72,7 +72,11 @@ for file in sorted_filelist:
     current += 1
 
 print()
-
+'''
+def mergefiles(sessionlogs):
+    mergedfile = ''
+    for 
+'''
 pointstype = input("Which POINT SYSTEM would you like to load for RACE RESULTS?\nNote: '1' means that the point system will be dynamic based on the number of racers. ")
 if pointstype == "1":
     dynamicPoints = True
@@ -93,6 +97,11 @@ if BLPoints == True:
             BLpointsystem = json.load(jsonfile)
 writtenlines = 24
 global lapCount
+
+def getTime():
+    result = time.localtime(time.time())
+    stringTime = str(result.tm_hour).zfill(2) + ':' + str(result.tm_min).zfill(2) + ':' + str(result.tm_sec).zfill(2)
+    return stringTime
 
 def timeConvert(rvtime):
     timelist = rvtime.split(":")
@@ -122,31 +131,36 @@ def firstLapCheck(sessionlog):
     return lapCount
 
 def splitRaces(sessionlog):
-    raceRows = []                
+    raceRows = []
+    raceExists = False
     with open(sessionlog) as csv_file:
         csv_reader = csv.reader(csv_file, delimiter=",")        
         for line in csv_reader:
             currentline = csv_reader.line_num
             if str(line[0]) == "Results":
                 raceRows.append(currentline)
-    with open(sessionlog) as csv_file:
-        csv_reader = csv.reader(csv_file, delimiter=",")
-        raceList = []
-        currentRace = ""
-        for line in csv_reader:
-            if csv_reader.line_num >= raceRows[0]:
-                isRaceRow = False
-                if csv_reader.line_num in raceRows:
-                    if currentRace != "":
-                        raceList.append(currentRace)
-                    isRaceRow = True
-                    currentRace = ""
-                if line[0] != "Version":
-                    for cell in line:
-                        currentRace += '"' + str(cell) + '",'
-                    currentRace += "\n"
-        raceList.append(currentRace)
-    return raceList
+                raceExists = True
+    if raceExists == True:
+        with open(sessionlog) as csv_file:
+            csv_reader = csv.reader(csv_file, delimiter=",")
+            raceList = []
+            currentRace = ""
+            for line in csv_reader:
+                if csv_reader.line_num >= raceRows[0]:
+                    isRaceRow = False
+                    if csv_reader.line_num in raceRows:
+                        if currentRace != "":
+                            raceList.append(currentRace)
+                        isRaceRow = True
+                        currentRace = ""
+                    if line[0] != "Version":
+                        for cell in line:
+                            currentRace += '"' + str(cell) + '",'
+                        currentRace += "\n"
+            raceList.append(currentRace)
+        return raceList
+    else:
+        return False
             
 
 def getBestLaps(race):
@@ -404,6 +418,12 @@ htmlbegin = """
 """
 html = ""
 
+def checkRaceState(sessionlog):
+    if splitRaces(sessionlog) != "False":
+        return False
+    else:
+        return True
+    
 # Initializing dict for racers
 def countPoints():
     global pointsTable
@@ -414,51 +434,54 @@ def countPoints():
     global stringBLTable
     global dummy
     global html
-    for race in splitRaces(sessionlog):
-        initTable(pointsTable, timeTable, bestLapTable, race)
-    lapCount = firstLapCheck(sessionlog)
-    for race in splitRaces(sessionlog):
-        DNFList = DNFCheck(pointsTable, race)
-        #print(race)
-        bestLapDict = getBestLaps(race)
-        html += '<h1 class="center">' + getTrackName(race) + " (" + str(lapCount) + ' Laps)</h1><div class="center">'
-        if dynamicPoints == False:
-            pointsTable = addPoints(race, pointsTable)
-            #print(pointsTable)
-            #print(bestLapDict)
-        else:
-            pointsTable = addPointsDyn(race, pointsTable)
-        timeTable = dict(sorted(addTime(race, timeTable, DNFList).items(), key=lambda item: item[1]))
-        bestLapTable = dict(sorted(addTime(race, bestLapTable, DNFList, BestLap=True).items(), key=lambda item: item[1]))
-        if race != splitRaces(sessionlog)[-1] or BLPoints == True:
-            stringpointsTable = stringTableMid(stringpointsTable, stringTimeTable, stringBLTable)
-        if BLPoints == True:
-            if dynamicBLPoints:
-                addBLPointsDyn(bestLapDict, pointsTable, race, DNFList)
+    if checkRaceState(sessionlog):
+        for race in splitRaces(sessionlog):
+            initTable(pointsTable, timeTable, bestLapTable, race)
+        lapCount = firstLapCheck(sessionlog)
+        for race in splitRaces(sessionlog):
+            DNFList = DNFCheck(pointsTable, race)
+            #print(race)
+            bestLapDict = getBestLaps(race)
+            html += '<h1 class="center">' + getTrackName(race) + " (" + str(lapCount) + ' Laps)</h1><div class="center">'
+            if dynamicPoints == False:
+                pointsTable = addPoints(race, pointsTable)
+                #print(pointsTable)
+                #print(bestLapDict)
             else:
-                pointsTable = addBLPoints(bestLapDict, pointsTable, DNFList)
-            DNFCheck(pointsTable, race)
-            if race != splitRaces(sessionlog)[-1]:
-                stringpointsTable = stringTableMid(stringpointsTable, dummy, dummy)
-        #print(stringpointsTable)
-    # print("Laps: " + str(lapCount))
-        playerDict = playerList(race, lapCount)
-        html += dictToHTML(bestLapDict, playerDict = playerDict)
-        html += "</br>"
-        global points_sorted
-        points_sorted = dict(reversed(sorted(pointsTable.items(), key=lambda item: item[1])))
-        lapCheck(race)
-    textBased = ''
-    currentPos = 1
-    for k,v in points_sorted.items():
-        try:
-            if currentPos <= configDict['liveModeLimit']:
-                textBased += str(currentPos) + '. ' + str(k) + ' - ' + str(v) + '\n'
-                currentPos += 1
-        except KeyError:
-            print('No liveModeLimit set in the config file. Using the default (20).')
-            configDict['liveModeLimit'] = 20
-    return textBased
+                pointsTable = addPointsDyn(race, pointsTable)
+            timeTable = dict(sorted(addTime(race, timeTable, DNFList).items(), key=lambda item: item[1]))
+            bestLapTable = dict(sorted(addTime(race, bestLapTable, DNFList, BestLap=True).items(), key=lambda item: item[1]))
+            if race != splitRaces(sessionlog)[-1] or BLPoints == True:
+                stringpointsTable = stringTableMid(stringpointsTable, stringTimeTable, stringBLTable)
+            if BLPoints == True:
+                if dynamicBLPoints:
+                    addBLPointsDyn(bestLapDict, pointsTable, race, DNFList)
+                else:
+                    pointsTable = addBLPoints(bestLapDict, pointsTable, DNFList)
+                DNFCheck(pointsTable, race)
+                if race != splitRaces(sessionlog)[-1]:
+                    stringpointsTable = stringTableMid(stringpointsTable, dummy, dummy)
+            #print(stringpointsTable)
+        # print("Laps: " + str(lapCount))
+            playerDict = playerList(race, lapCount)
+            html += dictToHTML(bestLapDict, playerDict = playerDict)
+            html += "</br>"
+            global points_sorted
+            points_sorted = dict(reversed(sorted(pointsTable.items(), key=lambda item: item[1])))
+            lapCheck(race)
+        textBased = ''
+        currentPos = 1
+        for k,v in points_sorted.items():
+            try:
+                if currentPos <= configDict['liveModeLimit']:
+                    textBased += str(currentPos) + '. ' + str(k) + ' - ' + str(v) + '\n'
+                    currentPos += 1
+            except KeyError:
+                print('No liveModeLimit set in the config file. Using the default (20).')
+                configDict['liveModeLimit'] = 20
+        return textBased
+    else:
+        print('No races in sessionlog as of ' + getTime() + '.')
     #print(timeTable)
     #print(stringBLTable)
     #print(lapCount)
@@ -498,24 +521,29 @@ if configDict['liveMode']:
     print('Live Mode is on. You can exit with Ctrl + C.')
     time.sleep(3)
     while True:
-        try:
-            pointsTable = {}
-            with open(os.path.join(workingpath, 'liveStandings.txt'), 'w+') as liveFile:
-                liveFile.write(countPoints())
-            time.sleep(2)
-        except KeyboardInterrupt:
-            print()
-            print('Exiting...')
-            sys.exit()
+        if checkRaceState(sessionlog):
+            try:
+                pointsTable = {}
+                with open(os.path.join(workingpath, 'liveStandings.txt'), 'w+') as liveFile:
+                    liveFile.write(countPoints())
+                time.sleep(2)
+            except KeyboardInterrupt:
+                print()
+                print('Exiting...')
+                sys.exit()
+        else:
+            time.sleep(10)
+            print('No races in sessionlog as of ' + getTime() + '.')
+            pass
         
 countPoints()
         
-
-with open(os.path.join(workingpath, getFileName(sessionlog, '.csv') + ".html"), "w+") as htmlfile:
-    htmlfile.write(htmlbegin + stringTableHTML(stringpointsTable, points_sorted) + '<h1 class="center">Time Table</h1>' + stringTableHTML(stringTimeTable, timeTable, True) + '<h1 class="center">Best Lap Table</h1>' + stringTableHTML(stringBLTable, bestLapTable, True) + html)
-    print()
-    print("HTML file has been created. :)")
-    
+if checkRaceState(sessionlog):
+    with open(os.path.join(workingpath, getFileName(sessionlog, '.csv') + ".html"), "w+") as htmlfile:
+        htmlfile.write(htmlbegin + stringTableHTML(stringpointsTable, points_sorted) + '<h1 class="center">Time Table</h1>' + stringTableHTML(stringTimeTable, timeTable, True) + '<h1 class="center">Best Lap Table</h1>' + stringTableHTML(stringBLTable, bestLapTable, True) + html)
+        print()
+        print("HTML file has been created. :)")
+        
 quitQ = input("Press Enter to quit")
 if "" in quitQ:
     sys.exit()
