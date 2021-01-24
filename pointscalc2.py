@@ -161,6 +161,7 @@ def splitRaces(sessionlog):
         return raceList
     else:
         return False
+        print('whaaaaa')
             
 
 def getBestLaps(race):
@@ -241,7 +242,7 @@ def addPointsDyn(race, pointsTable):
                 
     return pointsTable
 
-def addTime(race, timeTable, DNFList, BestLap=False):
+def addTime(race, timeTable, DNFList, FL=0, BestLap=False):
     csv_reader = csv.reader(race.splitlines(), delimiter=",")
     lastTime = 0
     for line in csv_reader:
@@ -257,6 +258,8 @@ def addTime(race, timeTable, DNFList, BestLap=False):
                         if str(k) == str(line[1]):
                             timeTable[k] = v + finishingTime
                             if BestLap == True:
+                                if finishingTime == FL:
+                                    stringBLTable[k] += '+ '
                                 stringBLTable[k] += timeConvertRev(finishingTime)
                             else:
                                 stringTimeTable[k] += timeConvertRev(finishingTime)
@@ -335,7 +338,10 @@ def dictToHTML(dict, isFullTable=False, playerDict={}, time=False):
                 htmlTable += "<th>BL</th>"
         htmlTable += "<th>TOTAL</th></tr>\n"
         for k,v in dict.items():
-            htmlTable += "<tr><td>" + str(k) + "</td><td>" + str(v) + "</td></tr>\n"
+            if '+ ' in str(v):
+                htmlTable += "<tr><td>" + str(k) + '</td><td class="bestlap">' + str(v).replace('+ ','') + "</td></tr>\n"
+            else:
+                htmlTable += "<tr><td>" + str(k) + "</td><td>" + str(v) + "</td></tr>\n"
     else:
         htmlTable += '<tr><th>Pos</th><th>Name</th><th>Race Time</th><th>Best Lap</th><th>Average Time</th><th>Car</th><th>Points After</th></tr>\n'
         position = 1
@@ -396,9 +402,15 @@ def stringTableHTML(stringpointsTable, pointsTable, time = False):
             v = timeConvertRev(v)
         if time == False or BLPoints == False:
             stringpointsTable[k] = stringpointsTable[k] + " + " + str(v)
-        string_sorted[k] = stringpointsTable[k].replace(" + ", "</td><td>")
+        string_sorted[k] = stringpointsTable[k].replace(" + + ", '</td><td class="bestlap">').replace(" + ", "</td><td>")
     HTMLTable = dictToHTML(string_sorted, True, time=time)
     return HTMLTable
+
+def getFastestLap(bestLapDict):
+    FastestLap = list(bestLapDict.values())[0]
+    print(FastestLap)
+    FastestLapConv = timeConvert(FastestLap.replace('.', ':'))
+    return FastestLapConv
 
 
 pointsTable = {}
@@ -419,10 +431,13 @@ htmlbegin = """
 html = ""
 
 def checkRaceState(sessionlog):
-    if splitRaces(sessionlog) != "False":
+    if str(splitRaces(sessionlog)) == "False":
+        print('lol')
         return False
     else:
+        print('heh')
         return True
+
     
 # Initializing dict for racers
 def countPoints():
@@ -442,6 +457,7 @@ def countPoints():
             DNFList = DNFCheck(pointsTable, race)
             #print(race)
             bestLapDict = getBestLaps(race)
+            FL = getFastestLap(bestLapDict)
             html += '<h1 class="center">' + getTrackName(race) + " (" + str(lapCount) + ' Laps)</h1><div class="center">'
             if dynamicPoints == False:
                 pointsTable = addPoints(race, pointsTable)
@@ -450,7 +466,7 @@ def countPoints():
             else:
                 pointsTable = addPointsDyn(race, pointsTable)
             timeTable = dict(sorted(addTime(race, timeTable, DNFList).items(), key=lambda item: item[1]))
-            bestLapTable = dict(sorted(addTime(race, bestLapTable, DNFList, BestLap=True).items(), key=lambda item: item[1]))
+            bestLapTable = dict(sorted(addTime(race, bestLapTable, DNFList, FL=FL, BestLap=True).items(), key=lambda item: item[1]))
             if race != splitRaces(sessionlog)[-1] or BLPoints == True:
                 stringpointsTable = stringTableMid(stringpointsTable, stringTimeTable, stringBLTable)
             if BLPoints == True:

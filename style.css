@@ -22,3 +22,6 @@ body{
 th {
     cursor: pointer;
 }
+.bestlap{
+    background: purple;
+}
