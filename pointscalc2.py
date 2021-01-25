@@ -161,7 +161,6 @@ def splitRaces(sessionlog):
         return raceList
     else:
         return False
-        print('whaaaaa')
             
 
 def getBestLaps(race):
@@ -209,7 +208,10 @@ def playerList(race, laps):
             bestLap = timeConvertRev(timeConvert(str(line[4])))
             raceTime = timeConvertRev(timeConvert(str(line[3])))
             avgTime = timeConvertRev(timeConvert(str(line[3]))/int(lapCount))
-            playerDict[str(line[1])] = [str(raceTime), str(bestLap), str(avgTime), str(line[2]), str(pointsTable[str(line[1])])]
+            avgTimeInt = timeConvert(str(line[3]))/int(lapCount)
+            bestLapInt = timeConvert(str(line[4]))
+            consistency = round((bestLapInt/avgTimeInt)*100, 1)
+            playerDict[str(line[1])] = [str(raceTime), str(bestLap), str(avgTime), str(consistency) + '%', str(line[2]), str(pointsTable[str(line[1])])]
     return playerDict
         
 
@@ -223,7 +225,11 @@ def addPoints(race, pointsTable):
                         if str(k) == str(line[1]):
                             pointsTable[k] = v + pointsystem[str(line[0])]
                             stringpointsTable[k] = stringpointsTable[k] + str(pointsystem[str(line[0])])
-                                
+                            if int(line[0]) < playerStats[k]['Best Finish']:
+                                playerStats[k]['Best Finish'] = int(line[0])
+                            if int(line[0]) > playerStats[k]['Worst Finish']:
+                                playerStats[k]['Worst Finish'] = int(line[0])
+                            playerStats[k][int(line[0])] += 1
                 
     return pointsTable
 
@@ -239,6 +245,11 @@ def addPointsDyn(race, pointsTable):
                         if str(k) == str(line[1]):
                             pointsTable[k] = v + pointsGot
                             stringpointsTable[k] = stringpointsTable[k] + str(pointsGot)
+                            if int(line[0]) < playerStats[k]['Best Finish']:
+                                playerStats[k]['Best Finish'] = int(line[0])
+                            if int(line[0]) > playerStats[k]['Worst Finish']:
+                                playerStats[k]['Worst Finish'] = int(line[0])
+                            playerStats[k][int(line[0])] += 1
                 
     return pointsTable
 
@@ -260,6 +271,7 @@ def addTime(race, timeTable, DNFList, FL=0, BestLap=False):
                             if BestLap == True:
                                 if finishingTime == FL:
                                     stringBLTable[k] += '+ '
+                                    playerStats[k]['Best Laps'] += 1
                                 stringBLTable[k] += timeConvertRev(finishingTime)
                             else:
                                 stringTimeTable[k] += timeConvertRev(finishingTime)
@@ -277,6 +289,7 @@ def addTime(race, timeTable, DNFList, FL=0, BestLap=False):
             if racer == str(k):
                 timeTable[k] += finishingTime
                 if BestLap == True:
+                    stringBLTable[k] += '- '
                     stringBLTable[k] += timeConvertRev(finishingTime)
                 else:
                     stringTimeTable[k] += timeConvertRev(finishingTime)
@@ -329,9 +342,9 @@ def addBLPointsDyn(bestLapDict, pointsTable, race, DNFList):
     return pointsTable
 
 def dictToHTML(dict, isFullTable=False, playerDict={}, time=False):
-    htmlTable = '<table class="inline" style="border:1; text-align: center; padding: 10px;">\n'
+    htmlTable = '<div class="view"><div class="wrapper"><table class="inline" style="border:1; text-align: center; padding: 10px;">\n'
     if isFullTable:
-        htmlTable += "<tr><th>Name</th>"
+        htmlTable += '<tr><th class="sticky-col first-col">Name</th>'
         for race in splitRaces(sessionlog):
             htmlTable += "<th>" + getTrackName(race) + "</th>"
             if BLPoints == True and time == False:
@@ -339,11 +352,13 @@ def dictToHTML(dict, isFullTable=False, playerDict={}, time=False):
         htmlTable += "<th>TOTAL</th></tr>\n"
         for k,v in dict.items():
             if '+ ' in str(v):
-                htmlTable += "<tr><td>" + str(k) + '</td><td class="bestlap">' + str(v).replace('+ ','') + "</td></tr>\n"
+                htmlTable += '<tr><td class="sticky-col first-col">' + str(k) + '</td><td class="bestlap">' + str(v).replace('+ ','') + "</td></tr>\n"
+            elif '- ' in str(v):
+                htmlTable += '<tr><td class="sticky-col first-col">' + str(k) + '</td><td class="dnf">' + str(v).replace('- ','') + "</td></tr>\n"
             else:
-                htmlTable += "<tr><td>" + str(k) + "</td><td>" + str(v) + "</td></tr>\n"
+                htmlTable += '<tr><td class="sticky-col first-col">' + str(k) + "</td><td>" + str(v) + "</td></tr>\n"
     else:
-        htmlTable += '<tr><th>Pos</th><th>Name</th><th>Race Time</th><th>Best Lap</th><th>Average Time</th><th>Car</th><th>Points After</th></tr>\n'
+        htmlTable += '<tr><th>Pos</th><th>Name</th><th>Race Time</th><th>Best Lap</th><th>Average Time</th><th>Consistency</th><th>Car</th><th>Points After</th></tr>\n'
         position = 1
         for k,v in playerDict.items():
             htmlTable += '<tr><td>' + str(position) + '</td><td>' + str(k) + '</td>'
@@ -351,7 +366,7 @@ def dictToHTML(dict, isFullTable=False, playerDict={}, time=False):
                 htmlTable += '<td>' + data + '</td>'
             htmlTable += '</tr>\n'
             position += 1
-    htmlTable += '</table>'
+    htmlTable += '</table></div></div>'
     return htmlTable
         
 def raceToDict(race):
@@ -374,6 +389,9 @@ def initTable(pointsTable, timeTable, bestLapTable, race):
                     stringpointsTable[str(line[1])] = ""
                     stringTimeTable[str(line[1])] = ""
                     stringBLTable[str(line[1])] = ""
+                    playerStats[str(line[1])] = {'Best Finish': 18, 'Worst Finish': 0, 'Best Laps': 0,}
+                    for pos in positionList:
+                        playerStats[str(line[1])][pos] = 0
                     
 def lapCheck(race):
     csv_reader = csv.reader(race.splitlines(), delimiter=",")
@@ -402,7 +420,7 @@ def stringTableHTML(stringpointsTable, pointsTable, time = False):
             v = timeConvertRev(v)
         if time == False or BLPoints == False:
             stringpointsTable[k] = stringpointsTable[k] + " + " + str(v)
-        string_sorted[k] = stringpointsTable[k].replace(" + + ", '</td><td class="bestlap">').replace(" + ", "</td><td>")
+        string_sorted[k] = stringpointsTable[k].replace(" + + ", '</td><td class="bestlap">').replace(" + - ", '</td><td class="dnf">').replace(" + ", "</td><td>")
     HTMLTable = dictToHTML(string_sorted, True, time=time)
     return HTMLTable
 
@@ -421,6 +439,9 @@ bestLapTable = {}
 stringBLTable = {}
 dummy = {}
 points_sorted = {}
+playerStats = {}
+positionList = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]
+
 htmlbegin = """
 <html>
 <head>
@@ -480,6 +501,7 @@ def countPoints():
             #print(stringpointsTable)
         # print("Laps: " + str(lapCount))
             playerDict = playerList(race, lapCount)
+            print(playerDict)
             html += dictToHTML(bestLapDict, playerDict = playerDict)
             html += "</br>"
             global points_sorted
@@ -514,24 +536,7 @@ def countPoints():
 #print()
 #print(stringBLTable)
 #print(stringTimeTable)
-html += """
-<script>
-const getCellValue = (tr, idx) => tr.children[idx].innerText || tr.children[idx].textContent;
 
-const comparer = (idx, asc) => (a, b) => ((v1, v2) => 
-    v1 !== "" && v2 !== "" && !isNaN(v1) && !isNaN(v2) ? v1 - v2 : v1.toString().localeCompare(v2)
-    )(getCellValue(asc ? a : b, idx), getCellValue(asc ? b : a, idx));
-
-// do the work...
-document.querySelectorAll("th").forEach(th => th.addEventListener("click", (() => {
-    const table = th.closest("table");
-    Array.from(table.querySelectorAll("tr:nth-child(n+2)"))
-        .sort(comparer(Array.from(th.parentNode.children).indexOf(th), this.desc = !this.desc))
-        .forEach(tr => table.appendChild(tr) );
-})));
-</script>
-"""
-html += "</div></body></html>"
 
 if configDict['liveMode']:
     print('Live Mode is on. You can exit with Ctrl + C.')
@@ -553,7 +558,45 @@ if configDict['liveMode']:
             pass
         
 countPoints()
-        
+
+#print(playerStats)
+playerStatsHTML = '<table><tr><th>PLAYER</th>'
+currentNo = 1
+for k, v in playerStats.items():
+    for stat, value in v.items():
+        if currentNo == 1:
+            playerStatsHTML += '<th>' + str(stat) + '</th>'
+    currentNo += 1
+    
+playerStatsHTML += '</tr>\n'
+
+for k, v in playerStats.items():
+    playerStatsHTML += '<tr>'
+    playerStatsHTML += '<td>' + str(k) + '</td>'
+    for stat, value in v.items():
+        playerStatsHTML += '<td>' + str(value) + '</td>'
+    playerStatsHTML += '</tr>\n'
+
+html += playerStatsHTML
+html += """
+<script>
+const getCellValue = (tr, idx) => tr.children[idx].innerText || tr.children[idx].textContent;
+
+const comparer = (idx, asc) => (a, b) => ((v1, v2) => 
+    v1 !== "" && v2 !== "" && !isNaN(v1) && !isNaN(v2) ? v1 - v2 : v1.toString().localeCompare(v2)
+    )(getCellValue(asc ? a : b, idx), getCellValue(asc ? b : a, idx));
+
+// do the work...
+document.querySelectorAll("th").forEach(th => th.addEventListener("click", (() => {
+    const table = th.closest("table");
+    Array.from(table.querySelectorAll("tr:nth-child(n+2)"))
+        .sort(comparer(Array.from(th.parentNode.children).indexOf(th), this.desc = !this.desc))
+        .forEach(tr => table.appendChild(tr) );
+})));
+</script>
+"""
+html += "</div></body></html>"
+
 if checkRaceState(sessionlog):
     with open(os.path.join(workingpath, getFileName(sessionlog, '.csv') + ".html"), "w+") as htmlfile:
         htmlfile.write(htmlbegin + stringTableHTML(stringpointsTable, points_sorted) + '<h1 class="center">Time Table</h1>' + stringTableHTML(stringTimeTable, timeTable, True) + '<h1 class="center">Best Lap Table</h1>' + stringTableHTML(stringBLTable, bestLapTable, True) + html)
