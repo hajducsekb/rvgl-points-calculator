@@ -23,8 +23,8 @@ else:
     
 # Handling cli arguments
 
-short_options = "i:b:p:P:"
-long_options = ["input=", "blpoints=", "pointstype=", "bltype="]
+short_options = "i:b:p:P:e"
+long_options = ["input=", "blpoints=", "pointstype=", "bltype=", "noConfirmExit"]
 
 args = sys.argv
 requiredArgs = args[1:]
@@ -42,7 +42,7 @@ BLPointsCheck = -1
 pointstype = 0
 BLpointstype = 0
 
-
+noConfirmExit = False
 for a, v in arguments:
     if a in ("-i", "--input"):
         print('Input:')
@@ -63,6 +63,8 @@ for a, v in arguments:
         print('Input:')
         print(str(v))
         BLpointstype = int(v)
+    if a in ("-e", "--noConfirmExit"):
+        noConfirmExit = True
 
 # Getting sessionlog file
 with open(os.path.join(workingpath, "config.json")) as configFile:
@@ -830,7 +832,9 @@ if checkRaceState(sessionlog):
         htmlfile.write(htmlbegin + stringTableHTML(stringpointsTable, points_sorted) + '<h1 class="center">Time Table</h1>' + stringTableHTML(stringTimeTable, timeTable, True) + '<h1 class="center">Best Lap Table</h1>' + stringTableHTML(stringBLTable, bestLapTable, True) + playerStatsHTML + html)
         print()
         print("HTML file has been created. :)")
-        
-quitQ = input("Press Enter to quit")
-if "" in quitQ:
+if noConfirmExit == False:        
+    quitQ = input("Press Enter to quit")
+    if "" in quitQ:
+        sys.exit()
+else:
     sys.exit()
