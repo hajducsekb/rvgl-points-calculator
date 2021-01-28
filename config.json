@@ -1,5 +1,7 @@
 {
     "penaltyTime" : 0.5,
     "liveMode" : false,
-    "listedSessionlogs" : 20
+    "listedSessionlogs" : 40,
+    "customOutputDir": false,
+    "outputDir": "/path/to/output"
 }

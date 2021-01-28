@@ -9,6 +9,8 @@ from pathlib import Path
 import math
 import ntpath
 import json
+import re
+import getopt
 
 # Getting path to current file
 if getattr(sys, "frozen", False):
@@ -18,6 +20,49 @@ if getattr(sys, "frozen", False):
     workingpath = Path(sys.executable).parent
 else:
     workingpath = Path(os.path.abspath(__file__)).parent
+    
+# Handling cli arguments
+
+short_options = "i:b:p:P:"
+long_options = ["input=", "blpoints=", "pointstype=", "bltype="]
+
+args = sys.argv
+requiredArgs = args[1:]
+
+try:
+    arguments, values = getopt.getopt(requiredArgs, short_options, long_options)
+except getopt.error as err:
+    # Output error, and return with an error code
+    print (str(err))
+    sys.exit(2)
+    
+sessionlog = ''
+    
+BLPointsCheck = -1
+pointstype = 0
+BLpointstype = 0
+
+
+for a, v in arguments:
+    if a in ("-i", "--input"):
+        print('Input:')
+        print(str(v))
+        sessionlog=str(v)
+    if a in ("-b", "--blpoints"):
+        print('Best Lap Points (bool):')
+        print(str(v))
+        if str(v).lower() == 'true':
+            BLPointsCheck = 1
+        else:
+            BLPointsCheck = 0
+    if a in ("-p", "--pointstype"):
+        print('Input:')
+        print(str(v))
+        pointstype = int(v)
+    if a in ("-P", "--bltype"):
+        print('Input:')
+        print(str(v))
+        BLpointstype = int(v)
 
 # Getting sessionlog file
 with open(os.path.join(workingpath, "config.json")) as configFile:
@@ -27,29 +72,34 @@ def getFileName(path, ext):
     stripName = ntpath.basename(path).replace(ext, '')
     return stripName
 
-filelist = glob.glob(os.path.join(workingpath.parent, "profiles", "*.csv"))
-if configDict['liveMode']:
-    sessionlog = Path(max(sorted(filelist, key=os.path.getctime)))
-else:
-    sorted_filelist = reversed(sorted(filelist, key=os.path.getctime))
-    current = 1
-    fileDict = {}
-    print()
-    for file in sorted_filelist:
-        if current < configDict['listedSessionlogs'] + 1:
-            print(str(current) + " - " + getFileName(file, ''))
-            fileDict[current] = Path(file)
-            current += 1
-    sessionlog = input("Which file do you want to choose?\nYou can also type in a path. ")
-    try: 
-        intlog = int(sessionlog)
-        sessionlog = fileDict[intlog]
-    except:
-        sessionlog = Path(sessionlog)
+if sessionlog == '':
+    filelist = glob.glob(os.path.join(workingpath.parent, "profiles", "*.csv"))
+    if configDict['liveMode']:
+        sessionlog = Path(max(sorted(filelist, key=os.path.getctime)))
+    else:
+        sorted_filelist = reversed(sorted(filelist, key=os.path.getctime))
+        current = 1
+        fileDict = {}
+        print()
+        for file in sorted_filelist:
+            if current < configDict['listedSessionlogs'] + 1:
+                print(str(current) + " - " + getFileName(file, ''))
+                fileDict[current] = Path(file)
+                current += 1
+        sessionlog = input("Which file do you want to choose?\nYou can also type in a path. ")
+        try: 
+            intlog = int(sessionlog)
+            sessionlog = fileDict[intlog]
+        except:
+            sessionlog = Path(sessionlog)
 
 print()
-
-BLquestion = input("Should points be given based on people\'s best laps? (y/n) ").lower()
+if BLPointsCheck == -1:
+    BLquestion = input("Should points be given based on people\'s best laps? (y/n) ").lower()
+elif BLPointsCheck == 0:
+    BLquestion = 'n'
+else:
+    BLquestion = 'y'
 if BLquestion == "y":
     BLPoints = True
 else:
@@ -72,12 +122,9 @@ for file in sorted_filelist:
     current += 1
 
 print()
-'''
-def mergefiles(sessionlogs):
-    mergedfile = ''
-    for 
-'''
-pointstype = input("Which POINT SYSTEM would you like to load for RACE RESULTS?\nNote: '1' means that the point system will be dynamic based on the number of racers. ")
+if pointstype == 0:
+    pointstype = input("Which POINT SYSTEM would you like to load for RACE RESULTS?\nNote: '1' means that the point system will be dynamic based on the number of racers. ")
+pointstype = str(pointstype)
 if pointstype == "1":
     dynamicPoints = True
     pointsystem = ""
@@ -88,7 +135,9 @@ else:
 print()
         
 if BLPoints == True:
-    BLpointstype = input("Which POINT SYSTEM would you like to load for BEST LAPS?\nNote: '1' means that the point system will be dynamic based on the number of racers. ")
+    if BLpointstype == 0:
+        BLpointstype = input("Which POINT SYSTEM would you like to load for BEST LAPS?\nNote: '1' means that the point system will be dynamic based on the number of racers. ")
+    BLpointstype = str(BLpointstype)
     if BLpointstype == "1":
         dynamicBLPoints = True
         BLpointsystem = ""
@@ -199,19 +248,44 @@ def getRacersCount(race):
             racersCount = int(line[2])
     return racersCount
 
-def playerList(race, laps):
+def playerList(race, laps, track):
     playerDict = {}
     csv_reader = csv.reader(race.splitlines(), delimiter=",")
     #print(lapCount)
     for line in csv_reader:
+        if str(line[0]) == "01":
+            winnerTime = timeConvert(str(line[3]))
+            raceTimeInt = timeConvert(str(line[3]))
+            player = str(line[1])
         if str(line[0]) != "#" and line[0] != "Version" and line[0] != "Session" and line[0] != "Results":
+            playerPrev = player
+            raceTimePrev = raceTimeInt
+            player = str(line[1])
             bestLap = timeConvertRev(timeConvert(str(line[4])))
             raceTime = timeConvertRev(timeConvert(str(line[3])))
+            raceTimeInt = timeConvert(str(line[3]))
+            gapToFirst = timeConvertRev(raceTimeInt-winnerTime)
+            intervalInt = raceTimeInt - raceTimePrev
+            interval = timeConvertRev(intervalInt)
             avgTime = timeConvertRev(timeConvert(str(line[3]))/int(lapCount))
             avgTimeInt = timeConvert(str(line[3]))/int(lapCount)
             bestLapInt = timeConvert(str(line[4]))
             consistency = round((bestLapInt/avgTimeInt)*100, 1)
-            playerDict[str(line[1])] = [str(raceTime), str(bestLap), str(avgTime), str(consistency) + '%', str(line[2]), str(pointsTable[str(line[1])])]
+            green = round((consistency-90)/(10/255),0)
+            if green < 0:
+                green = 0
+            red = round(255 - ((consistency-90)/(10/255)),0)
+            if red < 0:
+                red = 0
+            playerDict[str(line[1])] = [str(raceTime), '+' + str(gapToFirst), '+' + interval, str(bestLap), str(avgTime), '[rgba(' + str(red) + ',' + str(green) + ',0,0.8)]' + str(consistency) + '%', str(line[2]), str(pointsTable[str(line[1])])]
+            if str(line[0]) != "01" and intervalInt < playerStats[player]['Closest Finish']:
+                playerStats[player]['Closest Finish'] = intervalInt
+                playerStats[player]['CF Player'] = playerPrev
+                playerStats[player]['CF Track'] = track
+            if str(line[0]) != "01" and intervalInt < playerStats[playerPrev]['Closest Finish']:
+                playerStats[playerPrev]['Closest Finish'] = intervalInt
+                playerStats[playerPrev]['CF Player'] = player
+                playerStats[playerPrev]['CF Track'] = track
     return playerDict
         
 
@@ -229,6 +303,10 @@ def addPoints(race, pointsTable):
                                 playerStats[k]['Best Finish'] = int(line[0])
                             if int(line[0]) > playerStats[k]['Worst Finish']:
                                 playerStats[k]['Worst Finish'] = int(line[0])
+                            if int(line[0]) < 11:
+                                playerStats[k]['Top 10'] += 1
+                            if int(line[0]) < 4:
+                                playerStats[k]['Podiums'] += 1
                             playerStats[k][int(line[0])] += 1
                 
     return pointsTable
@@ -249,6 +327,10 @@ def addPointsDyn(race, pointsTable):
                                 playerStats[k]['Best Finish'] = int(line[0])
                             if int(line[0]) > playerStats[k]['Worst Finish']:
                                 playerStats[k]['Worst Finish'] = int(line[0])
+                            if int(line[0]) < 11:
+                                playerStats[k]['Top 10'] += 1
+                            if int(line[0]) < 4:
+                                playerStats[k]['Podiums'] += 1
                             playerStats[k][int(line[0])] += 1
                 
     return pointsTable
@@ -307,6 +389,7 @@ def DNFCheck(pointsTable, race):
             #print(racer + " has not finished.")
             stringpointsTable[racer] = stringpointsTable[racer] + "0"
             DNFList.append(racer)
+            playerStats[racer]['DNF'] += 1
     return DNFList
 
 def addBLPoints(bestLapDict, pointsTable, DNFList):
@@ -358,12 +441,16 @@ def dictToHTML(dict, isFullTable=False, playerDict={}, time=False):
             else:
                 htmlTable += '<tr><td class="sticky-col first-col">' + str(k) + "</td><td>" + str(v) + "</td></tr>\n"
     else:
-        htmlTable += '<tr><th>Pos</th><th>Name</th><th>Race Time</th><th>Best Lap</th><th>Average Time</th><th>Consistency</th><th>Car</th><th>Points After</th></tr>\n'
+        htmlTable += '<tr><th>Pos</th><th>Name</th><th>Race Time</th><th>Gap</th><th>Interval</th><th>Best Lap</th><th>Average Time</th><th>Consistency</th><th>Car</th><th>Points After</th></tr>\n'
         position = 1
         for k,v in playerDict.items():
             htmlTable += '<tr><td>' + str(position) + '</td><td>' + str(k) + '</td>'
             for data in v:
-                htmlTable += '<td>' + data + '</td>'
+                if 'rgb' in data:
+                    dataList = re.findall("\[(.*?)\]", data)
+                    htmlTable += '<td style="background-color: ' + dataList[0] + ';">' + data.replace('[' + dataList[0] + ']', '') + '</td>'
+                else:
+                    htmlTable += '<td>' + data + '</td>'
             htmlTable += '</tr>\n'
             position += 1
     htmlTable += '</table></div></div>'
@@ -389,7 +476,7 @@ def initTable(pointsTable, timeTable, bestLapTable, race):
                     stringpointsTable[str(line[1])] = ""
                     stringTimeTable[str(line[1])] = ""
                     stringBLTable[str(line[1])] = ""
-                    playerStats[str(line[1])] = {'Best Finish': 18, 'Worst Finish': 0, 'Best Laps': 0,}
+                    playerStats[str(line[1])] = {'Best Finish': 18, 'Worst Finish': 0, 'Best Laps': 0, 'Podiums': 0,'Top 10': 0, 'DNF': 0, 'Closest Finish': 9999999999999999, 'CF Player': '', 'CF Track': '',}
                     for pos in positionList:
                         playerStats[str(line[1])][pos] = 0
                     
@@ -453,13 +540,109 @@ html = ""
 
 def checkRaceState(sessionlog):
     if str(splitRaces(sessionlog)) == "False":
-        print('lol')
+        #print('lol')
         return False
     else:
-        print('heh')
+        #print('heh')
         return True
 
+def sortByTime(list):
+    newList = []
+    global timeTable
+    for k,v in timeTable.items():
+        if k in list:
+            newList.append(k)
+    print(newList)
+    return newList
+
+def determinePositions(points_sorted):
+    pointsList = []
+    equalPoints = []
+    tieDict = {}
+    ties = {}
+    for points in points_sorted.values():
+        if points in pointsList:
+            equalPoints.append(points)
+            print('Equality found: ' + str(points))
+        pointsList.append(points)
+    for points in equalPoints:
+        equalGuys = []
+        for k,v in points_sorted.items():
+            if v == points:
+                equalGuys.append(k)
+        posDict = {}
+        for guy in equalGuys:
+            tieDict[guy] = {}
+            posDict[guy] = []
+            for pos in positionList:
+                tieDict[guy][pos] = playerStats[guy][pos]
+                posDict[guy].append(playerStats[guy][pos])
+        for pos in list(reversed(positionList)):
+            print(pos)
+            tempDict = {}
+            for guy in tieDict.keys():
+                tempDict[guy] = tieDict[guy][pos]
+            print(tempDict)
+            if pos == 1:
+                tempDict = dict(reversed(sorted(tempDict.items(), key=lambda item: item[1])))
+            else:
+                tempDict = dict(sorted(tempDict.items(), key=lambda item: item[1]))
+            newTieDict = {}
+            for k,v in tempDict.items():
+                newTieDict[k] = tieDict[k]
+            tieDict = newTieDict
+        newPosDict = {}
+        print(posDict)
+        for guy in list(tieDict.keys()):
+            newPosDict[guy] = posDict[guy]
+        posDict = newPosDict
+        current = 1
+        needsBreaker = {}
+        done = []
+        for guy in list(tieDict.keys()):
+            print(guy)
+            try:
+                print('POSDICT')
+                print(posDict[guy])
+                print('TIEDICT')
+                print(list(posDict.values())[current])
+                if posDict[guy] != list(posDict.values())[current]:
+                    print('haha good')
+                    done.append(guy)
+                else:
+                    print('PANIC')
+                    done.append('<!placeholder!>' + str(current))
+                    needsBreaker['<!placeholder!>' + str(current)] = list(posDict.keys())[current]
+            except IndexError:
+                pass
+            current += 1
+        timeBroken = {}
+        for k,v in needsBreaker.items():
+            timeBroken[k] = sortByTime(v)
+        finalList = []
+        for player in done:
+            if '<!placeholder!>' in player:
+                finalList.append(timeBroken[player])
+            else:
+                finalList.append(player)
+        ties[points] = list(tieDict.keys())
+            
+    #print(pointsList)
+    newPointsSorted = {}
+    for points in pointsList:
+        if points not in equalPoints:
+            for k,v in points_sorted.items():
+                if v == points:
+                    newPointsSorted[k] = points
+        else:
+            for k,v in ties.items():
+                if k == points:
+                    for player in v:
+                        newPointsSorted[player] = points
+    print(newPointsSorted)
     
+    return newPointsSorted
+
 # Initializing dict for racers
 def countPoints():
     global pointsTable
@@ -470,6 +653,7 @@ def countPoints():
     global stringBLTable
     global dummy
     global html
+    global lapCount
     if checkRaceState(sessionlog):
         for race in splitRaces(sessionlog):
             initTable(pointsTable, timeTable, bestLapTable, race)
@@ -480,6 +664,7 @@ def countPoints():
             bestLapDict = getBestLaps(race)
             FL = getFastestLap(bestLapDict)
             html += '<h1 class="center">' + getTrackName(race) + " (" + str(lapCount) + ' Laps)</h1><div class="center">'
+            track = getTrackName(race)
             if dynamicPoints == False:
                 pointsTable = addPoints(race, pointsTable)
                 #print(pointsTable)
@@ -500,13 +685,14 @@ def countPoints():
                     stringpointsTable = stringTableMid(stringpointsTable, dummy, dummy)
             #print(stringpointsTable)
         # print("Laps: " + str(lapCount))
-            playerDict = playerList(race, lapCount)
-            print(playerDict)
+            playerDict = playerList(race, lapCount, track)
+            #print(playerDict)
             html += dictToHTML(bestLapDict, playerDict = playerDict)
             html += "</br>"
             global points_sorted
             points_sorted = dict(reversed(sorted(pointsTable.items(), key=lambda item: item[1])))
             lapCheck(race)
+        #points_sorted = determinePositions(points_sorted)
         textBased = ''
         currentPos = 1
         for k,v in points_sorted.items():
@@ -537,6 +723,11 @@ def countPoints():
 #print(stringBLTable)
 #print(stringTimeTable)
 
+if configDict['customOutputDir'] == True:
+    outputPath = configDict['outputDir']
+else:
+    outputPath = workingpath
+
 
 if configDict['liveMode']:
     print('Live Mode is on. You can exit with Ctrl + C.')
@@ -559,25 +750,62 @@ if configDict['liveMode']:
         
 countPoints()
 
-#print(playerStats)
-playerStatsHTML = '<table><tr><th>PLAYER</th>'
+playerStatsHTML = '<table><tr><th>Pos</th><th>Name</th>'
 currentNo = 1
+
+position = 1
+for k,v in points_sorted.items():
+    playerStats[k]['Pos'] = position
+    position += 1
+    
+playerStatsList = sorted(playerStats.keys(), key=lambda x: playerStats[x]['Pos'])
+newPlayerStats = {}
+for k in playerStatsList:
+    newPlayerStats[k] = playerStats[k]
+playerStats = newPlayerStats
+
+#print(playerStats)
+# Non-position based stats
 for k, v in playerStats.items():
     for stat, value in v.items():
-        if currentNo == 1:
-            playerStatsHTML += '<th>' + str(stat) + '</th>'
+        if stat not in positionList and stat != 'Pos':
+            if currentNo == 1:
+                playerStatsHTML += '<th>' + str(stat) + '</th>'
     currentNo += 1
     
 playerStatsHTML += '</tr>\n'
 
 for k, v in playerStats.items():
     playerStatsHTML += '<tr>'
-    playerStatsHTML += '<td>' + str(k) + '</td>'
+    playerStatsHTML += '<td>' + str(v['Pos']) + '</td><td>' + str(k) + '</td>'
     for stat, value in v.items():
-        playerStatsHTML += '<td>' + str(value) + '</td>'
+        if stat not in positionList and stat != 'Pos':
+            if stat == 'Closest Finish':
+                value = timeConvertRev(value)
+            playerStatsHTML += '<td>' + str(value) + '</td>'
     playerStatsHTML += '</tr>\n'
+playerStatsHTML += '</table>'
 
-html += playerStatsHTML
+#Position-based stats
+playerStatsHTML += '<table><tr><th>Pos</th><th>Name</th>'
+currentNo = 1
+for k, v in playerStats.items():
+    for stat, value in v.items():
+        if stat in positionList:
+            if currentNo == 1:
+                playerStatsHTML += '<th>' + str(stat) + '</th>'
+    currentNo += 1
+    
+playerStatsHTML += '</tr>\n'
+
+for k, v in playerStats.items():
+    playerStatsHTML += '<tr>'
+    playerStatsHTML += '<td>' + str(v['Pos']) + '</td><td>' + str(k) + '</td>'
+    for stat, value in v.items():
+        if stat in positionList and stat != 'Pos':
+            playerStatsHTML += '<td>' + str(value) + '</td>'
+    playerStatsHTML += '</tr>\n'
+playerStatsHTML += '</table>\n'
 html += """
 <script>
 const getCellValue = (tr, idx) => tr.children[idx].innerText || tr.children[idx].textContent;
@@ -598,8 +826,8 @@ document.querySelectorAll("th").forEach(th => th.addEventListener("click", (() =
 html += "</div></body></html>"
 
 if checkRaceState(sessionlog):
-    with open(os.path.join(workingpath, getFileName(sessionlog, '.csv') + ".html"), "w+") as htmlfile:
-        htmlfile.write(htmlbegin + stringTableHTML(stringpointsTable, points_sorted) + '<h1 class="center">Time Table</h1>' + stringTableHTML(stringTimeTable, timeTable, True) + '<h1 class="center">Best Lap Table</h1>' + stringTableHTML(stringBLTable, bestLapTable, True) + html)
+    with open(os.path.join(outputPath, getFileName(sessionlog, '.csv') + ".html"), "w+") as htmlfile:
+        htmlfile.write(htmlbegin + stringTableHTML(stringpointsTable, points_sorted) + '<h1 class="center">Time Table</h1>' + stringTableHTML(stringTimeTable, timeTable, True) + '<h1 class="center">Best Lap Table</h1>' + stringTableHTML(stringBLTable, bestLapTable, True) + playerStatsHTML + html)
         print()
         print("HTML file has been created. :)")
         
