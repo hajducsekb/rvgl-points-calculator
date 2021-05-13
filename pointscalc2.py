@@ -250,7 +250,7 @@ def getRacersCount(race):
             racersCount = int(line[2])
     return racersCount
 
-def playerList(race, laps, track):
+def playerList(race, laps, track, DNFList):
     playerDict = {}
     csv_reader = csv.reader(race.splitlines(), delimiter=",")
     #print(lapCount)
@@ -259,7 +259,8 @@ def playerList(race, laps, track):
             winnerTime = timeConvert(str(line[3]))
             raceTimeInt = timeConvert(str(line[3]))
             player = str(line[1])
-        if str(line[0]) != "#" and line[0] != "Version" and line[0] != "Session" and line[0] != "Results":
+        if str(line[0]) != "#" and line[0] != "Version" and line[0] != "Session" and line[0] != "Results" and str(line[1]) not in DNFList:
+            print(DNFList)
             playerPrev = player
             raceTimePrev = raceTimeInt
             player = str(line[1])
@@ -392,6 +393,8 @@ def DNFCheck(pointsTable, race):
             stringpointsTable[racer] = stringpointsTable[racer] + "0"
             DNFList.append(racer)
             playerStats[racer]['DNF'] += 1
+    print(DNFList)
+    print()
     return DNFList
 
 def addBLPoints(bestLapDict, pointsTable, DNFList):
@@ -470,17 +473,16 @@ def initTable(pointsTable, timeTable, bestLapTable, race):
     csv_reader = csv.reader(race.splitlines(), delimiter=",")
     for line in csv_reader:
         if str(line[0]) != "#" and line[0] != "Version" and line[0] != "Session" and line[0] != "Results":
-            if str(line[5]) == "true":
-                if str(line[1]) not in pointsTable.keys():
-                    pointsTable[str(line[1])] = 0
-                    timeTable[str(line[1])] = 0
-                    bestLapTable[str(line[1])] = 0
-                    stringpointsTable[str(line[1])] = ""
-                    stringTimeTable[str(line[1])] = ""
-                    stringBLTable[str(line[1])] = ""
-                    playerStats[str(line[1])] = {'Best Finish': 18, 'Worst Finish': 0, 'Best Laps': 0, 'Podiums': 0,'Top 10': 0, 'DNF': 0, 'Closest Finish': 9999999999999999, 'CF Player': '', 'CF Track': '',}
-                    for pos in positionList:
-                        playerStats[str(line[1])][pos] = 0
+            if str(line[1]) not in pointsTable.keys():
+                pointsTable[str(line[1])] = 0
+                timeTable[str(line[1])] = 0
+                bestLapTable[str(line[1])] = 0
+                stringpointsTable[str(line[1])] = ""
+                stringTimeTable[str(line[1])] = ""
+                stringBLTable[str(line[1])] = ""
+                playerStats[str(line[1])] = {'Best Finish': 18, 'Worst Finish': 0, 'Best Laps': 0, 'Podiums': 0,'Top 10': 0, 'DNF': 0, 'Closest Finish': 9999999999999999, 'CF Player': '', 'CF Track': '',}
+                for pos in positionList:
+                    playerStats[str(line[1])][pos] = 0
                     
 def lapCheck(race):
     csv_reader = csv.reader(race.splitlines(), delimiter=",")
@@ -686,8 +688,7 @@ def countPoints():
                 if race != splitRaces(sessionlog)[-1]:
                     stringpointsTable = stringTableMid(stringpointsTable, dummy, dummy)
             #print(stringpointsTable)
-        # print("Laps: " + str(lapCount))
-            playerDict = playerList(race, lapCount, track)
+            playerDict = playerList(race, lapCount, track, DNFList)
             #print(playerDict)
             html += dictToHTML(bestLapDict, playerDict = playerDict)
             html += "</br>"
