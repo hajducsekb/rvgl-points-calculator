@@ -60,5 +60,4 @@ This determines the number of sessionlogs that you can pick from (this is listed
 I expect there to be a few bugs at the very least with the HTML file, since not all sessionlogs are the same, and the app is also quite versatile. If you encounter one, please report it using one of the following:
 
 - Issue Tracker
-- Discord (`hajducsekb#3604`)
-- Telegram (`@hajducsekb`)
+- Discord (`hajduc#3383`)
